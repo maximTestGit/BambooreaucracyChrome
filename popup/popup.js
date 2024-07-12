@@ -17,7 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
     button.addEventListener('click', function() {
         const inputArea = document.getElementById('inputArea'); 
         //alert(inputArea.value);
-        chrome.runtime.sendMessage({action: "loadDayData", content: inputArea.value});
-        printLogPopup('info', "Sent message LoadDayData to background.js");
+        const requestLoadData = {
+            command: "loadDayDataP2B",
+            content: inputArea.value
+        };
+        chrome.runtime.sendMessage(requestLoadData);
+        printLogPopup('info', `Sent message LoadDayDataP2B content: "${requestLoadData.content}"`);
     });
 });

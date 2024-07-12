@@ -7,13 +7,18 @@ printInfo('Background', "This prints to the console of the service worker (backg
 
 // Listen for messages sent to the background script
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    self.printInfo('Background', `message recieved: `, request);
+    self.printInfo('Background', `message recieved: ${request.command}`);
 	// Check if the received message is the one we're interested in
-	if (request.action === "loadDayData") {
+	if (request.command === "loadDayDataP2B") {
+        const requestB2C = {
+            command: "loadDayDataB2C",
+            content: request.content
+        };
+        self.printInfo('Background', `message sent: ${requestB2C.command} content: ${requestB2C.content}`);
 		// Find the active tab
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-			chrome.tabs.sendMessage(tabs[0].id, request, function(response) {
-                self.printInfo('Background', `background: processed: `, request);
+			chrome.tabs.sendMessage(tabs[0].id, requestB2C, function(response) {
+                self.printInfo('Background', `background: processed: `, requestB2C);
 			});
 		});
 	}
@@ -37,13 +42,13 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         // @ts-ignore
         switch (request.logLevel) {
           // @ts-ignore
-          case "debug": self.printDebug('content', request.message); break;
+          case "debug": self.printDebug('Content', request.message); break;
           // @ts-ignore
-          case "info": self.printInfo('content', request.message); break;
+          case "info": self.printInfo('Content', request.message); break;
           // @ts-ignore
-          case "warn": self.printWarn('content', request.message); break;
+          case "warn": self.printWarn('Content', request.message); break;
           // @ts-ignore
-          case "error": self.printError('content', request.message); break;
+          case "error": self.printError('Content', request.message); break;
         }
       }
       else if (request.command === "logO2B") {
