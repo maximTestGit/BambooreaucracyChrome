@@ -1,23 +1,66 @@
-// This is the service worker script, which executes in its own context
-// when the extension is installed or refreshed (or when you access its console).
-// It would correspond to the background script in chrome extensions v2.
+importScripts('./utils/logger.js');
+importScripts('background-utils.js')
 
-console.log("This prints to the console of the service worker (background script)")
+printInfo('Background', "This prints to the console of the service worker (background script)")
 
 // Importing and using functionality from external files is also possible.
-importScripts('background-utils.js')
 
 // Listen for messages sent to the background script
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    console.log(`background: recieved: `, request);
+    self.printInfo('Background', `message recieved: `, request);
 	// Check if the received message is the one we're interested in
 	if (request.action === "loadDayData") {
 		// Find the active tab
 		chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
 			chrome.tabs.sendMessage(tabs[0].id, request, function(response) {
-                console.log(`background: processed: `, request);
+                self.printInfo('Background', `background: processed: `, request);
 			});
 		});
 	}
-});
+    // #region logMessages
+    else if (request.command === "logP2B") {
+        sendResponse({ result: 'logP2B' });
+        // @ts-ignore
+        switch (request.logLevel) {
+          // @ts-ignore
+          case "debug": self.printDebug('Popup', request.message); break;
+          // @ts-ignore
+          case "info": self.printInfo('Popup', request.message); break;
+          // @ts-ignore
+          case "warn": self.printWarn('Popup', request.message); break;
+          // @ts-ignore
+          case "error": self.printError('Popup', request.message); break;
+        }
+      }
+      else if (request.command === "logC2B") {
+        sendResponse({ result: 'logC2B' });
+        // @ts-ignore
+        switch (request.logLevel) {
+          // @ts-ignore
+          case "debug": self.printDebug('content', request.message); break;
+          // @ts-ignore
+          case "info": self.printInfo('content', request.message); break;
+          // @ts-ignore
+          case "warn": self.printWarn('content', request.message); break;
+          // @ts-ignore
+          case "error": self.printError('content', request.message); break;
+        }
+      }
+      else if (request.command === "logO2B") {
+        sendResponse({ result: 'logO2B' });
+        // @ts-ignore
+        switch (request.logLevel) {
+          // @ts-ignore
+          case "debug": self.printDebug('options', request.message); break;
+          // @ts-ignore
+          case "info": self.printInfo('options', request.message); break;
+          // @ts-ignore
+          case "warn": self.printWarn('options', request.message); break;
+          // @ts-ignore
+          case "error": self.printError('options', request.message); break;
+        }
+      }
+      // #endregion logMessages
+  
+  });
 
