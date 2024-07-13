@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             content: inputArea.value
         };
         chrome.runtime.sendMessage(requestLoadData);
+        window.close();
         printLogPopup('info', `Sent message LoadDayDataP2B content: "${requestLoadData.content}"`);
     });
 });
