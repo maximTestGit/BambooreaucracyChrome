@@ -48,7 +48,7 @@ async function processDayDataRequest(requestDayData) {
     await sleep(1000);
     var dayData = JSON.parse(requestDayData.content);
     var div = document.querySelector('.AddEditEntry__addEntryLink');
-    //throw new Error("Not implemented");
+    // create Entries by dayData.Items.length - 1
     if (div) {
         var linkAddEntry;
         printLogContent('info', "Div with class 'AddEditEntry__addEntryLink' found.");
@@ -67,6 +67,7 @@ async function processDayDataRequest(requestDayData) {
         // Log if the div is not found
         printLogContent('info', "Div with class 'AddEditEntry__addEntryLink' not found.");
     }
+    
     const clockFields = Array.from(document.querySelectorAll(".ClockField__formInput.fab-TextInput.fab-TextInput--width2"))
         .sort((a, b) => a.id.localeCompare(extractNumberFromString(b.id)));
 
@@ -96,14 +97,22 @@ async function processDayDataRequest(requestDayData) {
         setClockField(clockFieldEnd, timeEnd);
         var fieldRow = findFieldRowByClockField(clockFieldStart.id);
         if (fieldRow) {
-            var saveTimeToElement = findElementByText(fieldRow, '--Select Project/Task--');
-            if (saveTimeToElement) {
-                printLogContent('info', "Found element with class 'fab-SelectToggle__content'");
-                saveTimeToElement.textContent = saveTimeTo;
-                printLogContent('info', `Set selectToggleContent to '${saveTimeTo}'`);
+            var saveTimeToLable = findElementByText(fieldRow, 'Save time to...');
+            if (saveTimeToLable) {
+                printLogContent('info', "Found element with 'Save time to...'");
+                saveTimeToLable.textContent = saveTimeTo;
+                printLogContent('info', `Set textContent to '${saveTimeTo}'`);
+                var saveTimeToElement = findElementByText(fieldRow, '--Select Project/Task--');
+                if (saveTimeToElement) {
+                    printLogContent('info', "Found element with class 'fab-SelectToggle__content'");
+                    saveTimeToElement.textContent = saveTimeTo;
+                    printLogContent('info', `Set selectToggleContent to '${saveTimeTo}'`);
 
+                } else {
+                    printLogContent('info', "Element with class 'fab-SelectToggle__content' not found");
+                }
             } else {
-                printLogContent('info', "Element with class 'fab-SelectToggle__content' not found");
+                printLogContent('info', "Element with class 'fab-TextInput__label' not found");
             }
         } else {
             printLogContent('info', "FieldRow not found");
