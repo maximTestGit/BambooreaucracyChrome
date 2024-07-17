@@ -67,12 +67,12 @@ async function processDayDataRequest(requestDayData) {
         // Log if the div is not found
         printLogContent('info', "Div with class 'AddEditEntry__addEntryLink' not found.");
     }
-    
-    const clockFields = Array.from(document.querySelectorAll(".ClockField__formInput.fab-TextInput.fab-TextInput--width2"))
-        .sort((a, b) => a.id.localeCompare(extractNumberFromString(b.id)));
+
+    const fieldRows = document.querySelectorAll('.fieldRow');
+    var clockField1;
 
     for (let i = 0; i < dayData.Items.length; i++) {
-        var item = dayData.Items[i];
+        let item = dayData.Items[i];
 
         var dateStart = new Date(item.Date);
         var timePair = convertToH12Format(dateStart);
@@ -89,37 +89,38 @@ async function processDayDataRequest(requestDayData) {
         var saveTimeTo = `${project} » ${task}`;
         var count = item.Count;
 
-        let k = i * 2;
-        const clockFieldStart = clockFields[k];
-        const clockFieldEnd = clockFields[k + 1];
+        let fieldRow = fieldRows[i];
+        const clockFields = Array.from(
+            fieldRow.querySelectorAll(".ClockField__formInput.fab-TextInput.fab-TextInput--width2"))
+                .sort((a, b) => a.id.localeCompare(extractNumberFromString(b.id)));
+        const clockFieldStart = clockFields[0];
+        const clockFieldEnd = clockFields[1];
+        if (i==0) {
+            clockField1 = clockFieldStart;
+        }
 
         setClockField(clockFieldStart, timeStart);
         setClockField(clockFieldEnd, timeEnd);
-        var fieldRow = findFieldRowByClockField(clockFieldStart.id);
-        if (fieldRow) {
-            var saveTimeToLable = findElementByText(fieldRow, 'Save time to...');
-            if (saveTimeToLable) {
-                printLogContent('info', "Found element with 'Save time to...'");
-                saveTimeToLable.textContent = saveTimeTo;
-                printLogContent('info', `Set textContent to '${saveTimeTo}'`);
-                var saveTimeToElement = findElementByText(fieldRow, '--Select Project/Task--');
-                if (saveTimeToElement) {
-                    printLogContent('info', "Found element with class 'fab-SelectToggle__content'");
-                    saveTimeToElement.textContent = saveTimeTo;
-                    printLogContent('info', `Set selectToggleContent to '${saveTimeTo}'`);
+        /*
+        var saveTimeToLable = findElementByText(fieldRow, 'Save time to...');
+        if (saveTimeToLable) {
+            printLogContent('info', "Found element with 'Save time to...'");
+            saveTimeToLable.textContent = saveTimeTo;
+            printLogContent('info', `Set textContent to '${saveTimeTo}'`);
+            var saveTimeToElement = findElementByText(fieldRow, '--Select Project/Task--');
+            if (saveTimeToElement) {
+                printLogContent('info', "Found element with class 'fab-SelectToggle__content'");
+                saveTimeToElement.textContent = saveTimeTo;
+                printLogContent('info', `Set selectToggleContent to '${saveTimeTo}'`);
 
-                } else {
-                    printLogContent('info', "Element with class 'fab-SelectToggle__content' not found");
-                }
             } else {
-                printLogContent('info', "Element with class 'fab-TextInput__label' not found");
+                printLogContent('info', "Element with class 'fab-SelectToggle__content' not found");
             }
         } else {
-            printLogContent('info', "FieldRow not found");
+            printLogContent('info', "Element with class 'fab-TextInput__label' not found");
         }
-
+        */
     }
-    const clockField1 = clockFields[0];
     if (clockField1) {
         clockField1.focus();
     }
@@ -127,18 +128,18 @@ async function processDayDataRequest(requestDayData) {
 
 function findElementByText(element, text) {
     if (element.textContent.includes(text)) {
-      return element;
+        return element;
     }
-  
+
     for (let child of element.children) {
-      let result = findElementByText(child, text);
-      if (result) {
-        return result;
-      }
+        let result = findElementByText(child, text);
+        if (result) {
+            return result;
+        }
     }
-  
+
     return null;
-  }
+}
 
 function setClockField(clockField, time) {
     //printLogContent('info', `Setting clockField ${clockField.id} to ${time}`);
