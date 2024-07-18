@@ -101,30 +101,93 @@ async function processDayDataRequest(requestDayData) {
 
         setClockField(clockFieldStart, timeStart);
         setClockField(clockFieldEnd, timeEnd);
-        /*
-        var saveTimeToLable = findElementByText(fieldRow, 'Save time to...');
-        if (saveTimeToLable) {
-            printLogContent('info', "Found element with 'Save time to...'");
-            saveTimeToLable.textContent = saveTimeTo;
-            printLogContent('info', `Set textContent to '${saveTimeTo}'`);
-            var saveTimeToElement = findElementByText(fieldRow, '--Select Project/Task--');
-            if (saveTimeToElement) {
-                printLogContent('info', "Found element with class 'fab-SelectToggle__content'");
-                saveTimeToElement.textContent = saveTimeTo;
-                printLogContent('info', `Set selectToggleContent to '${saveTimeTo}'`);
 
-            } else {
-                printLogContent('info', "Element with class 'fab-SelectToggle__content' not found");
-            }
-        } else {
-            printLogContent('info', "Element with class 'fab-TextInput__label' not found");
-        }
-        */
+        var jssY61 = fieldRow.querySelector('.jss-y61');
+        var fabSelectElement = jssY61.querySelector('.fab-Select');
+        
+        transformHtmlElement(fabSelectElement, 'SM9.2.1 » BLD - Design, Code, QA, Documentation', '32-105');
+
+        let spanNotes = jssY61.querySelector('.AddEditEntry__noteIconWrapper');
+        let spanBaloon = spanNotes.firstChild;
+        if (spanBaloon) {
+            spanBaloon.setAttribute('balloon-position', 'top');
+          }
     }
     if (clockField1) {
         clockField1.focus();
     }
 }
+
+function transformHtmlElement(element, textContent, optionValue) {
+    // Get the first div inside the element
+    let firstDiv = element.querySelector('div:first-child');
+
+    // Get the fab-SelectToggle div
+    let fabSelectToggle = firstDiv.querySelector('.fab-SelectToggle');
+
+    // Add the 'fab-SelectToggle--clearable' class
+    fabSelectToggle.classList.add('fab-SelectToggle--clearable');
+
+    // Change the 'data-menu-id' attribute
+    fabSelectToggle.setAttribute('data-menu-id', 'fab-menu68');
+
+    // Change the 'aria-label' attribute
+    fabSelectToggle.setAttribute('aria-label', textContent);
+
+    // Get the fab-SelectToggle__placeholder div
+    let guts = fabSelectToggle.querySelector('.fab-SelectToggle__guts');
+    let placeholder = guts.querySelector('.fab-SelectToggle__placeholder');
+
+    let content = document.createElement('div');
+    content.classList.add('fab-SelectToggle__content');
+    content.textContent = textContent;
+
+    // Replace the placeholder div with the new content div in the guts div
+    guts.replaceChild(content, placeholder);
+    
+
+    // Get the select element
+    let select = element.querySelector('select');
+
+    // Change the value of the option
+    select.options[0].value = optionValue;
+
+    return element;
+}
+
+
+function transformHtmlElement1(fabSelectElement, textContent, optionValue) {
+
+    // Get the fab-SelectToggle div
+    let fabSelectToggle = fabSelectElement.querySelector('.fab-SelectToggle');
+
+    // Add the 'fab-SelectToggle--clearable' class
+    fabSelectToggle.classList.add('fab-SelectToggle--clearable');
+
+    // Change the 'data-menu-id' attribute
+    fabSelectToggle.setAttribute('data-menu-id', 'fab-menu68');
+
+    // Change the 'aria-label' attribute
+    fabSelectToggle.setAttribute('aria-label', textContent);
+
+    // Get the fab-SelectToggle__placeholder div
+    //let saveTimeToElement = findElementByText(fieldRow, '--Select Project/Task--');
+    let saveTimeToElement = fabSelectToggle.querySelector('.fab-SelectToggle__placeholder');
+    saveTimeToElement.classList.replace('fab-SelectToggle__placeholder', 'fab-SelectToggle__content');
+    saveTimeToElement.textContent = textContent;
+
+    // Add the new div to the fab-SelectToggle__guts div
+    fabSelectToggle.querySelector('.fab-SelectToggle__guts').appendChild(content);
+
+    // Get the select element
+    let select = fabSelectElement.querySelector('select');
+
+    // Change the value of the option
+    select.options[0].value = optionValue;
+
+    return fabSelectElement;
+}
+
 
 function findElementByText(element, text) {
     if (element.textContent.includes(text)) {
