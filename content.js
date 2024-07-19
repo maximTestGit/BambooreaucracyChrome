@@ -74,96 +74,103 @@ async function processDayDataRequest(requestDayData) {
     const employeeId = SESSION_USER.employeeId;
     printLogContent('info', `employeeId: ${employeeId}`);
 
-    var i = 0;
-    const item = requestDayData.Items[i];
-
-    const dateStartFull = new Date(item.Date);
-    const year = dateStartFull.getFullYear();
-    const month = dateStartFull.getMonth() + 1; // Months are zero-indexed (January = 0)
-    const day = dateStartFull.getDate();
-    
-    const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-    printLogContent('info', `date: ${date}`);
-    
-    var hours = dateStartFull.getHours();
-    var minutes = dateStartFull.getMinutes();
-    
-    const start = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    printLogContent('info', `start: ${start}`);
-
-    var duration = item.TotalDuration;
-    printLogContent('info', `duration: ${duration}`);
-
-    var endTime = new Date(dateStartFull.getTime() + duration * 60*1000);
-    hours = endTime.getHours();
-    minutes = endTime.getMinutes();
-    
-    const end = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    printLogContent('info', `end: ${end}`);
-
-    const project = 32;
-    const task = 105;
-
-    const requestData = {
-        "entries": [
-            {
-                "id": null,
-                "trackingId": i,
-                "employeeId": employeeId,
-                "date": date,
-                "start": start,
-                "end": end,
-                "note": "",
-                "projectId": project,
-                "taskId": task
-            }
-        ]
-    };
-
-    const body = JSON.stringify(requestData);
-    printLogContent('info', `requestData: ${JSON.stringify(requestData)}`);
-
     const scriptWithCSRFToken = Array.from(scripts)
         .find(script => script.textContent.includes('var CSRF_TOKEN'));
     const CSRF_TOKEN = scriptWithCSRFToken.textContent.match(/var CSRF_TOKEN = "([^"]+)"/)[1];
     printLogContent('info', `CSRF_TOKEN: ${CSRF_TOKEN}`);
 
-    await submitTimesheetEntry(CSRF_TOKEN, employeeId, body);
+
+    for (let dayDataNo = 0; dayDataNo < requestDayData.length; dayDataNo++) {
+        const dayData = requestDayData[dayDataNo];
+        printLogContent('info', `Processing day data: ${dayDataNo + 1} of ${requestDayData.length}`);
+
+        for (let itemNo = 0; itemNo < dayData.Items.length; itemNo++) {
+            const item = dayData.Items[itemNo];
+
+            const dateStartFull = new Date(item.Date);
+            const year = dateStartFull.getFullYear();
+            const month = dateStartFull.getMonth() + 1; // Months are zero-indexed (January = 0)
+            const day = dateStartFull.getDate();
+
+            const date = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            printLogContent('info', `date: ${date}`);
+
+            var hours = dateStartFull.getHours();
+            var minutes = dateStartFull.getMinutes();
+
+            const start = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            printLogContent('info', `start: ${start}`);
+
+            var duration = item.TotalDuration;
+            printLogContent('info', `duration: ${duration}`);
+
+            var endTime = new Date(dateStartFull.getTime() + duration * 60 * 1000);
+            hours = endTime.getHours();
+            minutes = endTime.getMinutes();
+
+            const end = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            printLogContent('info', `end: ${end}`);
+
+            const project = item.TaskData.ProjectId;
+            const task = item.TaskData.TaskId;
+
+            const requestData = {
+                "entries": [
+                    {
+                        "id": null,
+                        "trackingId": itemNo,
+                        "employeeId": employeeId,
+                        "date": date,
+                        "start": start,
+                        "end": end,
+                        "note": "",
+                        "projectId": project,
+                        "taskId": task
+                    }
+                ]
+            };
+
+            const body = JSON.stringify(requestData);
+            printLogContent('info', `requestData: ${JSON.stringify(requestData)}`);
+
+            await submitTimesheetEntry(CSRF_TOKEN, employeeId, body);
+        }
+    }
 }
 
 async function submitTimesheetEntry(csrf_token, employeeId, body) {
     try {
-      const response = await fetch("https://qognify.bamboohr.com/timesheet/clock/entries", {
-        method: "POST",
-        headers: {
-          "accept": "application/json, text/plain, */*",
-          "accept-language": "en-US,en;q=0.9,he;q=0.8,ru;q=0.7",
-          "content-type": "application/json;charset=UTF-8",
-          "priority": "u=1, i",
-          "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"",
-          "sec-ch-ua-mobile": "?1",
-          "sec-ch-ua-platform": "\"Android\"",
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "same-origin",
-          "x-csrf-token": csrf_token,
-          "Referer": `https://qognify.bamboohr.com/employees/timesheet/?id=${employeeId}`,
-          "Referrer-Policy": "strict-origin-when-cross-origin",
-        },
-        body: body,
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Error submitting timesheet entry: ${response.statusText}`);
-      }
-  
-      const data = await response.json();
-      console.log("Timesheet entry submitted successfully:", data);
+        const response = await fetch("https://qognify.bamboohr.com/timesheet/clock/entries", {
+            method: "POST",
+            headers: {
+                "accept": "application/json, text/plain, */*",
+                "accept-language": "en-US,en;q=0.9,he;q=0.8,ru;q=0.7",
+                "content-type": "application/json;charset=UTF-8",
+                "priority": "u=1, i",
+                "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"",
+                "sec-ch-ua-mobile": "?1",
+                "sec-ch-ua-platform": "\"Android\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-origin",
+                "x-csrf-token": csrf_token,
+                "Referer": `https://qognify.bamboohr.com/employees/timesheet/?id=${employeeId}`,
+                "Referrer-Policy": "strict-origin-when-cross-origin",
+            },
+            body: body,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error submitting timesheet entry: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("Timesheet entry submitted successfully:", data);
     } catch (error) {
-      console.error("Error submitting timesheet entry:", error);
+        console.error("Error submitting timesheet entry:", error);
     }
-  }
-  
+}
+
 
 
 async function processDayDataRequest2(requestDayData) {
@@ -215,10 +222,10 @@ async function processDayDataRequest2(requestDayData) {
         let fieldRow = fieldRows[i];
         const clockFields = Array.from(
             fieldRow.querySelectorAll(".ClockField__formInput.fab-TextInput.fab-TextInput--width2"))
-                .sort((a, b) => a.id.localeCompare(extractNumberFromString(b.id)));
+            .sort((a, b) => a.id.localeCompare(extractNumberFromString(b.id)));
         const clockFieldStart = clockFields[0];
         const clockFieldEnd = clockFields[1];
-        if (i==0) {
+        if (i == 0) {
             clockField1 = clockFieldStart;
         }
 
@@ -227,7 +234,7 @@ async function processDayDataRequest2(requestDayData) {
 
         var jssY61 = fieldRow.querySelector('.jss-y61');
         var fabSelectElement = jssY61.querySelector('.fab-Select');
-        
+
         transformHtmlElement(fabSelectElement, 'SM9.2.1 » BLD - Design, Code, QA, Documentation', '32-105');
 
         // let spanNotes = jssY61.querySelector('.AddEditEntry__noteIconWrapper');
@@ -267,7 +274,7 @@ function transformHtmlElement(element, textContent, optionValue) {
 
     // Replace the placeholder div with the new content div in the guts div
     guts.replaceChild(content, placeholder);
-    
+
 
     // Get the select element
     let selectElement = element.querySelector('select');
