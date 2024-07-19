@@ -10,12 +10,12 @@ function printLogPopup(level, message) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Select the button and input area by their IDs or classes
     const button = document.getElementById('loadButton');
     // Add an event listener to the button for the click event
-    button.addEventListener('click', function() {
-        const inputArea = document.getElementById('inputArea'); 
+    button.addEventListener('click', function () {
+        const inputArea = document.getElementById('inputArea');
         //alert(inputArea.value);
         const requestLoadData = {
             command: "loadDayDataP2B",

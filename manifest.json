@@ -10,13 +10,15 @@
     },
     "options_page": "settings/settings.html",
     "action": {
-        "default_title": "Chrome Addon v3 Starter",
-        "default_popup": "popup/popup.html"
+        "default_title": "Bambooreaucracy Qognify",
+        "default_popup": "popup/popup.html",
+        "default_icon": "logo/logo-128.png"
     },
     "permissions": [
         "storage",
         "tabs",
-        "unlimitedStorage"
+        "unlimitedStorage",
+        "windows"
     ],
     "background": {
         "service_worker": "background.js"

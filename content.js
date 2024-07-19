@@ -118,7 +118,7 @@ async function processDayDataRequest(requestDayData) {
                 "entries": [
                     {
                         "id": null,
-                        "trackingId": itemNo,
+                        "trackingId": itemNo + 1,
                         "employeeId": employeeId,
                         "date": date,
                         "start": start,
