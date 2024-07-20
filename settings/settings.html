@@ -11,8 +11,7 @@
 
 <body>
     <div style="margin-top: 10px; margin-bottom: 10px;">
-        <label for="url">Url:</label>
-        <input type="text" id="url" name="url" size="70">
+        <input id="fileInput" type="file" id="file" name="file" accept=".ics">
         <label for="year">Year:</label>
         <select id="year" name="year">
             <option value="2024">2024</option>
@@ -34,6 +33,9 @@
             <option value="12">December</option>
         </select>
         <button id="loadButton">Load</button>
+    </div>
+    <div style="margin-top: 10px; margin-bottom: 10px;">
+        <textarea id="calendarItemsArea" value="..." style="width: 100%; height: 500px;"></textarea>
     </div>
 </body>
 
