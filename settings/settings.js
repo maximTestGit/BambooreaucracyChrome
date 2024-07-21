@@ -66,6 +66,8 @@ const WeekdayHours =
   ]
 const lines = [];
 
+var sessionData = null;
+
 document.addEventListener('DOMContentLoaded', function () {
   var currentDate = new Date();
   var currentYear = currentDate.getFullYear();
@@ -115,12 +117,25 @@ document.addEventListener('DOMContentLoaded', function () {
         // This event is triggered when the file is read successfully
         const fileContent = event.target.result;
         lines.push(...fileContent.split(/\r?\n/));
-        console.log(fileContent); // Do something with the content
+        //console.log(fileContent); // Do something with the content
       };
 
       reader.readAsText(file); // Read the file as text
     }
   });
+
+  chrome.runtime.sendMessage({ command: 'settingsInitializedS2B' }, 
+    function (response) {
+      // @ts-ignore
+      if (chrome.runtime.lastError) {
+          // @ts-ignore
+          console.log(`Bambooreaucracy(error): logS2B: ${chrome.runtime.lastError.message}`);
+      } else {
+        sessionData = response.sessionData;
+        printLogSettings('info', `csrfToken: ${sessionData.csrfToken} `);
+      }
+  });
+
 });
 
 function processLines(lines) {
@@ -212,4 +227,17 @@ function isCalendarItemSelected(calendarItem) {
     .some(key => calendarItem.title.includes(key)); // Case-sensitive keyword check
 
   return hasDuration && notCancelled;
+}
+
+function printLogSettings(level, message) {
+  console.log(`Bambooreaucracy(${level}): ${message}`);
+  // @ts-ignore
+  chrome.runtime.sendMessage({ command: 'logS2B', logLevel: level, message: message }, 
+    function (response) {
+      // @ts-ignore
+      if (chrome.runtime.lastError) {
+          // @ts-ignore
+          console.log(`Bambooreaucracy(error): logS2B: ${chrome.runtime.lastError.message}`);
+      }
+  });
 }

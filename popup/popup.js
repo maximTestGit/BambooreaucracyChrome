@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const button = document.getElementById('loadButton');
     // Add an event listener to the button for the click event
     button.addEventListener('click', function () {
-        /*const inputArea = document.getElementById('inputArea');
+        const inputArea = document.getElementById('inputArea');
         //alert(inputArea.value);
         const requestLoadData = {
             command: "loadDayDataP2B",
@@ -24,11 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.runtime.sendMessage(requestLoadData);
         window.close();
         printLogPopup('info', `Sent message LoadDayDataP2B content: "${requestLoadData.content}"`);
-        */
-        const url = "webcal://outlook.office365.com/owa/calendar/5b4c75e003314bf69b9b0ec9d96fd885@hexagon.com/a91365c4bb4046299835ee81ee4c272c4170665060950721818/S-1-8-3537779786-4055093824-1303897958-2981506478/reachcalendar.ics";
-        const lines = tryDownloadIcsFile(url);
-
-
     });
 });
 
