@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
   mergeButton.addEventListener('click', function () {
     mergeCalendarData();
 
-    const serializedCalendarItems = JSON.stringify(calendarEntryList, null, 2); 
+    const serializedCalendarItems = JSON.stringify(calendarEntryList, null, 2);
     const textareaElement = document.getElementById("calendarItemsArea");
     textareaElement.value = serializedCalendarItems;
 
@@ -40,29 +40,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // #region sendButton
   var sendButton = document.getElementById('sendButton');
-  sendButton.addEventListener('click', async function () { // Step 2
-    const requestData = {
-      "entries": [
-        {
-          "id": null,
-          "trackingId": 1,
-          "employeeId": sessionData.employeeId,
-          "date": '2024-07-01',
-          "start": '10:00',
-          "end": '11:30',
-          "note": "",
-          "projectId": 32,
-          "taskId": 105
-        }
-      ]
-    };
-
-    const body = JSON.stringify(requestData);
-    printLogSettings('info', `requestData: ${JSON.stringify(requestData)}`);
-
-    await submitTimesheetEntry(sessionData.csrfToken, sessionData.employeeId, body);
-
-
+  sendButton.addEventListener('click', async function () {
+    let bambooentryList = extractAllBambooEntries(calendarEntryList);
+    for (let i = 0; i < bambooentryList.length; i++) {
+      const bambooEntry = bambooentryList[i];
+      await sendEntry(i, bambooEntry);
+    }
     alert('Timesheet updae sent');
   });
 
@@ -84,6 +67,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
+/*const requestData = {
+  "entries": [
+    {
+      "id": null,
+      "trackingId": 1,
+      "employeeId": sessionData.employeeId,
+      "date": '2024-07-01',
+      "start": '10:00',
+      "end": '11:30',
+      "note": "",
+      "projectId": 32,
+      "taskId": 105
+    }
+  ]
+};*/
+async function sendEntry(i, calendarEntry) {
+  const requestData = {
+    "entries": [
+      {
+        "id": null,
+        "trackingId": i + 1,
+        "employeeId": sessionData.employeeId,
+        "date": extractDateFromISOString(calendarEntry.Date),
+        "start": extractTimeFromISOString(calendarEntry.Date),
+        "end": extractTimeFromISOString(
+          calculateEntryEnd(
+            calendarEntry.Date,
+            calendarEntry.Duration)),
+        "note": "",
+        "projectId": calendarEntry.ProjectId,
+        "taskId": calendarEntry.TaskId
+      }
+    ]
+  };
+  const body = JSON.stringify(requestData);
+  printLogSettings('info', `requestData: ${JSON.stringify(requestData)}`);
+
+  await submitTimesheetEntry(sessionData.csrfToken, sessionData.employeeId, body);
+}
+
+function extractTimeFromISOString(isoString) {
+  const date = new Date(isoString);
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
 function mergeCalendarData() {
   var dailyDetails = sessionData.timesheet.dailyDetails;
   for (const dateKey in dailyDetails) {
@@ -93,13 +123,14 @@ function mergeCalendarData() {
 
     if (clockEntries.length) {
       const calendarEntry = calendarEntryList
-          .find((entry) => compareDates(stringToDate(entry.Date), date));
+        .find((entry) => compareDates(stringToDate(entry.Date), date));
       if (calendarEntry) {
-        const clockEntriesTotalDuration = 
+        calendarEntry.clockEntries = clockEntries;
+        const clockEntriesTotalDuration =
           (clockEntries
-            .reduce((total, entry) => total + entry.hours, 0))*60;
+            .reduce((total, entry) => total + entry.hours, 0)) * 60;
 
-        const calendarItemTotalDuration = 
+        const calendarItemTotalDuration =
           calendarEntry
             .Items
             .reduce((total, item) => total + item.Duration, 0);
@@ -151,10 +182,22 @@ async function submitTimesheetEntry(csrf_token, employeeId, body) {
 
 // #region helpers
 
-function addHoursToDate(baseDate, hours) {
-  const milliseconds = hours * 60 * 60 * 1000; // Convert hours to milliseconds
-  return new Date(baseDate.getTime() + milliseconds);
+function extractAllBambooEntries(data) {
+  const allItems = [];
+  data.forEach(entry => {
+    allItems.push(...entry.Items);
+  });
+  return allItems;
 }
+
+function calculateEntryEnd(startTimeString, durationInMinutes) {
+  const startTime = new Date(startTimeString);
+  const endTimeMilliseconds = startTime.getTime() + (durationInMinutes * 60 * 1000);
+  const endTime = new Date(endTimeMilliseconds);
+  const endString = endTime.toISOString();
+  return endString;
+}
+
 
 function stringToDate(dateString) {
   const dateParts = dateString.split('-');
@@ -171,6 +214,11 @@ function compareDates(date1, date2) {
     date1.getMonth() === date2.getMonth() &&
     date1.getDate() === date2.getDate()
   );
+}
+
+function extractDateFromISOString(isoString) {
+  const dateParts = isoString.split('T')[0];
+  return dateParts;
 }
 
 // #endregion helpers
