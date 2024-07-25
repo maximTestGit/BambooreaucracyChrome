@@ -123,7 +123,10 @@ function mergeCalendarData() {
   var dailyDetails = sessionData.timesheet.dailyDetails;
   for (const dateKey in dailyDetails) {
     const dailyData = dailyDetails[dateKey];
-    let isTmeOff = dailyData.timeOff?.length > 0;
+    let isTmeOff = 
+      dailyData.timeOffHours > 0
+        ||
+        dailyData.holidayHours > 0;
     const date = stringToDate(dailyData.date);
     const calendarEntry = calendarEntryList
       .find((entry) => compareDates(stringToDate(entry.Date), date));
