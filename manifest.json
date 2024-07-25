@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "Lazy Panda",
-    "description": "Lazy Panda chrome extension",
+    "name": "Bambooreaucracy Helper",
+    "description": "Bambooreaucracy Helper chrome extension",
     "version": "0.0.1",
     "icons": {
         "16": "logo/lazy panda1.png",
