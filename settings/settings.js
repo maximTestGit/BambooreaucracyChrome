@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
   sendButton.addEventListener('click', async function () {
     let bambooentryList = extractAllBambooEntries(calendarEntryList);
     let clockEntries = extractAllClockEntries(calendarEntryList);
-    for (let i=0; i<clockEntries.length; i++) {
+    for (let i = 0; i < clockEntries.length; i++) {
       await removeTimesheetEntry(sessionData.csrfToken, sessionData.employeeId, clockEntries[i].id);
     }
     for (let i = 0; i < bambooentryList.length; i++) {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     alert('Timesheet updae sent');
   }
-);
+  );
 
   // #endregion sendButton
 
@@ -123,27 +123,32 @@ function mergeCalendarData() {
   var dailyDetails = sessionData.timesheet.dailyDetails;
   for (const dateKey in dailyDetails) {
     const dailyData = dailyDetails[dateKey];
+    let isTmeOff = dailyData.timeOff?.length > 0;
     const date = stringToDate(dailyData.date);
-    const clockEntries = dailyData.clockEntries;
+    const calendarEntry = calendarEntryList
+      .find((entry) => compareDates(stringToDate(entry.Date), date));
+    if (isTmeOff) {
+      calendarEntry.TimeOff = true;
+    } else {
+      const clockEntries = dailyData.clockEntries;
 
-    if (clockEntries.length) {
-      const calendarEntry = calendarEntryList
-        .find((entry) => compareDates(stringToDate(entry.Date), date));
-      if (calendarEntry) {
-        calendarEntry.clockEntries = clockEntries;
-        const clockEntriesTotalDuration =
-          (clockEntries
-            .reduce((total, entry) => total + entry.hours, 0)) * 60;
+      if (clockEntries.length) {
+        if (calendarEntry) {
+          calendarEntry.clockEntries = clockEntries;
+          const clockEntriesTotalDuration =
+            (clockEntries
+              .reduce((total, entry) => total + entry.hours, 0)) * 60;
 
-        const calendarItemTotalDuration =
-          calendarEntry
-            .Items
-            .reduce((total, item) => total + item.Duration, 0);
+          const calendarItemTotalDuration =
+            calendarEntry
+              .Items
+              .reduce((total, item) => total + item.Duration, 0);
 
-        if (clockEntriesTotalDuration > calendarItemTotalDuration) {
-          let defaultItem = calendarEntry.Items.find((item) => item.IsDefault);
-          if (defaultItem) {
-            defaultItem.Duration += clockEntriesTotalDuration - calendarItemTotalDuration;
+          if (clockEntriesTotalDuration > calendarItemTotalDuration) {
+            let defaultItem = calendarEntry.Items.find((item) => item.IsDefault);
+            if (defaultItem) {
+              defaultItem.Duration += clockEntriesTotalDuration - calendarItemTotalDuration;
+            }
           }
         }
       }
@@ -218,7 +223,6 @@ async function removeTimesheetEntry(csrf_token, employeeId, entityId) {
 
     printLogSettings("Info", `Timesheet entry deleted successfully: ${response}`);
   } catch (error) {
-    //console.error("Error submitting timesheet entry:", error);
     printLogSettings("Error", `Error submitting timesheet entry: ${error}`);
   }
 }
@@ -228,7 +232,9 @@ async function removeTimesheetEntry(csrf_token, employeeId, entityId) {
 function extractAllBambooEntries(data) {
   const allItems = [];
   data.forEach(entry => {
-    allItems.push(...entry.Items);
+    if (!entry.TimeOff) {
+      allItems.push(...entry.Items);
+    }
   });
   return allItems;
 }
