@@ -1,18 +1,18 @@
 {
     "manifest_version": 3,
-    "name": "Bambooreaucracy",
-    "description": "Bambooreaucracy chrome extension",
+    "name": "Lazy Panda",
+    "description": "Lazy Panda chrome extension",
     "version": "0.0.1",
     "icons": {
-        "16": "logo/logo-16.png",
-        "48": "logo/logo-48.png",
-        "128": "logo/logo-128.png"
+        "16": "logo/lazy panda1.png",
+        "48": "logo/lazy panda1.png",
+        "128": "logo/lazy panda1.png"
     },
     "options_page": "settings/settings.html",
     "action": {
-        "default_title": "Bambooreaucracy Qognify",
+        "default_title": "Lazy Panda",
         "default_popup": "popup/popup.html",
-        "default_icon": "logo/logo-128.png"
+        "default_icon": "logo/lazy panda1.png"
     },
     "permissions": [
         "storage",
@@ -23,8 +23,14 @@
     "background": {
         "service_worker": "background.js"
     },
-    "content_scripts": [{
-        "js": ["content.js"],
-        "matches": ["<all_urls>"]
-    }]
+    "content_scripts": [
+        {
+            "js": [
+                "content.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
 }
