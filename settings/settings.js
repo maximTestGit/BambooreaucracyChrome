@@ -42,12 +42,17 @@ document.addEventListener('DOMContentLoaded', function () {
   var sendButton = document.getElementById('sendButton');
   sendButton.addEventListener('click', async function () {
     let bambooentryList = extractAllBambooEntries(calendarEntryList);
+    let clockEntries = extractAllClockEntries(calendarEntryList);
+    for (let i=0; i<clockEntries.length; i++) {
+      await removeTimesheetEntry(sessionData.csrfToken, sessionData.employeeId, clockEntries[i].id);
+    }
     for (let i = 0; i < bambooentryList.length; i++) {
       const bambooEntry = bambooentryList[i];
       await sendEntry(i, bambooEntry);
     }
     alert('Timesheet updae sent');
-  });
+  }
+);
 
   // #endregion sendButton
 
@@ -165,7 +170,7 @@ async function submitTimesheetEntry(csrf_token, employeeId, body) {
         "Referer": `https://qognify.bamboohr.com/employees/timesheet/?id=${employeeId}`,
         "Referrer-Policy": "strict-origin-when-cross-origin",
       },
-      body: body,
+      "body": body
     });
 
     if (!response.ok) {
@@ -180,12 +185,59 @@ async function submitTimesheetEntry(csrf_token, employeeId, body) {
   }
 }
 
+async function removeTimesheetEntry(csrf_token, employeeId, entityId) {
+  let body =
+  {
+    "entries": [entityId]
+  };
+  let bodyString = JSON.stringify(body);
+  try {
+    const response = await fetch("https://qognify.bamboohr.com/timesheet/clock/entries", {
+      "method": "DELETE",
+      "headers": {
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9,he;q=0.8,ru;q=0.7",
+        "content-type": "application/json;charset=UTF-8",
+        "priority": "u=1, i",
+        "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"",
+        "sec-ch-ua-mobile": "?1",
+        "sec-ch-ua-platform": "\"Android\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
+        "x-csrf-token": csrf_token
+      },
+      "Referer": `https://qognify.bamboohr.com/employees/timesheet/?id=${employeeId}`,
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "body": bodyString
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error submitting timesheet entry: ${response.statusText}`);
+    }
+
+    printLogSettings("Info", `Timesheet entry deleted successfully: ${response}`);
+  } catch (error) {
+    //console.error("Error submitting timesheet entry:", error);
+    printLogSettings("Error", `Error submitting timesheet entry: ${error}`);
+  }
+}
+
 // #region helpers
 
 function extractAllBambooEntries(data) {
   const allItems = [];
   data.forEach(entry => {
     allItems.push(...entry.Items);
+  });
+  return allItems;
+}
+function extractAllClockEntries(data) {
+  const allItems = [];
+  data.forEach(entry => {
+    if (entry.clockEntries) {
+      allItems.push(...entry.clockEntries);
+    }
   });
   return allItems;
 }
