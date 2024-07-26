@@ -119,14 +119,17 @@ function extractTimeFromISOString(isoString) {
   return `${hours}:${minutes}`;
 }
 
+function formatDateToISO8601(date) {
+  const adjustedDate = new Date(date);
+  adjustedDate.setHours(adjustedDate.getHours() + 3);
+  return adjustedDate.toISOString().slice(0, -1) + '+03:00';
+}
+
 function mergeCalendarData() {
   var dailyDetails = sessionData.timesheet.dailyDetails;
   for (const dateKey in dailyDetails) {
     const dailyData = dailyDetails[dateKey];
-    let isTmeOff = 
-      dailyData.timeOffHours > 0
-        ||
-        dailyData.holidayHours > 0;
+    let isTmeOff = checkDayOff(dailyData);
     const date = stringToDate(dailyData.date);
     const calendarEntry = calendarEntryList
       .find((entry) => compareDates(stringToDate(entry.Date), date));
@@ -153,10 +156,27 @@ function mergeCalendarData() {
               defaultItem.Duration += clockEntriesTotalDuration - calendarItemTotalDuration;
             }
           }
+
+          let clockEntryFirstStart = new Date(Math.min(...clockEntries.map(entry => new Date(entry.start))));
+          let calendarEntryFirstStart = new Date(Math.min(...calendarEntry.Items.map(item => new Date(item.Date))));
+          let startWorkDiff = calendarEntryFirstStart - clockEntryFirstStart;
+          if (startWorkDiff > 0) {
+            for (let i = 0; i < calendarEntry.Items.length; i++) {
+              const correctedDate = new Date(new Date(calendarEntry.Items[i].Date) - startWorkDiff);
+              const correctedDateString = formatDateToISO8601(correctedDate);
+              calendarEntry.Items[i].Date = correctedDateString;
+            }
+          }
         }
       }
     }
   }
+}
+
+function checkDayOff(dailyData) {
+  return dailyData.timeOffHours > 0
+    ||
+    dailyData.holidayHours > 0;
 }
 
 async function submitTimesheetEntry(csrf_token, employeeId, body) {
