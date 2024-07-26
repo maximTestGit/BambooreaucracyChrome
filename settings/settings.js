@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // #region mergeButton
   var mergeButton = document.getElementById('mergeButton');
   mergeButton.addEventListener('click', function () {
+    calendarEntryList = JSON.parse(document.getElementById("calendarItemsArea").value);
     mergeCalendarData();
 
     const serializedCalendarItems = JSON.stringify(calendarEntryList, null, 2);
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // #region sendButton
   var sendButton = document.getElementById('sendButton');
   sendButton.addEventListener('click', async function () {
+    calendarEntryList = JSON.parse(document.getElementById("calendarItemsArea").value);
     let bambooentryList = extractAllBambooEntries(calendarEntryList);
     let clockEntries = extractAllClockEntries(calendarEntryList);
     for (let i = 0; i < clockEntries.length; i++) {
@@ -129,46 +131,56 @@ function mergeCalendarData() {
   var dailyDetails = sessionData.timesheet.dailyDetails;
   for (const dateKey in dailyDetails) {
     const dailyData = dailyDetails[dateKey];
-    let isTmeOff = checkDayOff(dailyData);
     const date = stringToDate(dailyData.date);
     const calendarEntry = calendarEntryList
       .find((entry) => compareDates(stringToDate(entry.Date), date));
-    if (isTmeOff) {
-      calendarEntry.TimeOff = true;
-    } else {
-      const clockEntries = dailyData.clockEntries;
 
-      if (clockEntries.length) {
-        if (calendarEntry) {
-          calendarEntry.clockEntries = clockEntries;
-          const clockEntriesTotalDuration =
-            (clockEntries
-              .reduce((total, entry) => total + entry.hours, 0)) * 60;
+    if (calendarEntry) {
+      if (checkDayOff(dailyData)) {
+        calendarEntry.TimeOff = true;
+      } else {
+        const clockEntries = dailyData.clockEntries;
 
-          const calendarItemTotalDuration =
-            calendarEntry
-              .Items
-              .reduce((total, item) => total + item.Duration, 0);
+        if (clockEntries.length) {
+          if (calendarEntry) {
+            calendarEntry.clockEntries = clockEntries;
+            const clockEntriesTotalDuration =
+              (clockEntries
+                .reduce((total, entry) => total + entry.hours, 0)) * 60;
 
-          if (clockEntriesTotalDuration > calendarItemTotalDuration) {
-            let defaultItem = calendarEntry.Items.find((item) => item.IsDefault);
-            if (defaultItem) {
-              defaultItem.Duration += clockEntriesTotalDuration - calendarItemTotalDuration;
+            const calendarItemTotalDuration =
+              calendarEntry
+                .Items
+                .reduce((total, item) => total + item.Duration, 0);
+
+            let durationDiff = 0;
+            if (clockEntriesTotalDuration > calendarItemTotalDuration) {
+              durationDiff = (clockEntriesTotalDuration - calendarItemTotalDuration) * 60 * 1000;
             }
-          }
 
-          let clockEntryFirstStart = new Date(Math.min(...clockEntries.map(entry => new Date(entry.start))));
-          let calendarEntryFirstStart = new Date(Math.min(...calendarEntry.Items.map(item => new Date(item.Date))));
-          let startWorkDiff = calendarEntryFirstStart - clockEntryFirstStart;
-          if (startWorkDiff > 0) {
-            for (let i = 0; i < calendarEntry.Items.length; i++) {
-              const correctedDate = new Date(new Date(calendarEntry.Items[i].Date) - startWorkDiff);
-              const correctedDateString = formatDateToISO8601(correctedDate);
-              calendarEntry.Items[i].Date = correctedDateString;
+            let clockEntryFirstStart = new Date(Math.min(...clockEntries.map(entry => new Date(entry.start))));
+            let calendarEntryFirstStart = new Date(Math.min(...calendarEntry.Items.map(item => new Date(item.Date))));
+            let startWorkDiff = calendarEntryFirstStart - clockEntryFirstStart;
+            if (startWorkDiff > 0 || durationDiff > 0) {
+              let itemDurationDiff = 0;
+              for (let i = 0; i < calendarEntry.Items.length; i++) {
+                const correctedDate = new Date(new Date(calendarEntry.Items[i].Date)
+                  - startWorkDiff
+                  + itemDurationDiff);
+                const correctedDateString = formatDateToISO8601(correctedDate);
+                calendarEntry.Items[i].Date = correctedDateString;
+                if (itemDurationDiff === 0 && calendarEntry.Items[i].IsDefault) {
+                  itemDurationDiff = durationDiff;
+                  calendarEntry.Items[i].Duration += itemDurationDiff / (60 * 1000);
+                  // from now will move items followin deault later on itemDurationDiff
+                  // because default latem's duration is changed
+                }
+              }
             }
           }
         }
       }
+
     }
   }
 }
