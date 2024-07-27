@@ -37,7 +37,7 @@ function loadToBeautyView() {
 
     const hours = Math.floor(totalDuration / 60);
     const minutes = totalDuration % 60;
-    const totalDurationFormatted = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}min`;
+    const totalDurationFormatted = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m`;
 
     const h3Element = document.createElement('h3');
     h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted})`;
