@@ -15,22 +15,56 @@ textarea {
     overflow-wrap: break-word;
 }
 
-.json-key {
-    color: #1e90ff; /* Blue color for keys */
+#calendarEntries {
+    margin-top: 20px;
+    border: 1px solid gray;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 600px;
 }
 
-.json-string {
-    color: #2e8b57; /* Green color for string values */
+.entry-div {
+    margin-bottom: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
-.json-number {
-    color: #ff4500; /* Orange color for number values */
+h3 {
+    background-color: blueviolet;
+    color: white;
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
-.json-boolean {
-    color: #ff6347; /* Tomato color for boolean values */
+h3.time-off {
+    background-color: gray;
+    color: white;
+    margin-left: 10px;
 }
 
-.json-null {
-    color: #a9a9a9; /* Gray color for null values */
+p {
+    margin: 5px 0;
+}
+
+.item-date {
+    background-color: #f0f8ff;
+    color: #000080;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.item-end {
+    background-color: #f0f8ff;
+    /* Light blue background */
+    color: #000080;
+    /* Navy text */
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.item-default {
+    margin-left: 20px;
+    /* Shift to the right */
 }

@@ -1,11 +1,63 @@
 var sessionData = null;
 var calendarEntryList = null;
 
+function loadToBeautyView() {
+  const calendarEntriesDiv = document.getElementById('calendarEntries');
+  calendarEntriesDiv.innerHTML = '';
+
+  calendarEntryList.forEach(entry => {
+    const entryDiv = document.createElement('div');
+    entryDiv.classList.add('entry-div');
+
+    const date = new Date(entry.Date);
+    const timeOff = entry.TimeOff !== undefined ? entry.TimeOff : false;
+
+    let totalDuration = 0;
+    entry.Items.forEach(item => {
+      totalDuration += item.Duration;
+    });
+    const hours = Math.floor(totalDuration / 60);
+    const minutes = totalDuration % 60;
+    const totalDurationFormatted = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}min`;
+
+    const h3Element = document.createElement('h3');
+    h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted}) ${timeOff ? '(Off)' : ''}`
+    if (timeOff) {
+      h3Element.classList.add('time-off');
+    }
+
+    entryDiv.appendChild(h3Element);
+
+    entry.Items.forEach(item => {
+      const itemDiv = document.createElement('div');
+      const itemDate = new Date(item.Date);
+      const endDate = new Date(itemDate.getTime() + item.Duration * 60000); // Duration in milliseconds
+      itemDiv.innerHTML = `
+              <p class="item-date"><strong>Time:</strong> 
+                ${itemDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()} (${item.Duration} minutes)
+              </p>
+              <p class="item-default"><strong>Project/Task:</strong> ${item.Project} # ${item.Task}</p>
+              <p class="item-default"><strong>Is Default:</strong> ${item.IsDefault ? 'Yes' : 'No'}</p>
+          `;
+      entryDiv.appendChild(itemDiv);
+    });
+
+    calendarEntriesDiv.appendChild(entryDiv);
+  });
+}
+
+function loadToTextView() {
+  const serializedCalendarLineList = JSON.stringify(calendarEntryList, null, 2);
+  const textareaElement = document.getElementById("calendarItemsArea");
+  textareaElement.textContent = serializedCalendarLineList;
+}
+
+
 document.addEventListener('DOMContentLoaded', function () {
 
   // #region fileInput
-  document.getElementById('fileInput').addEventListener('change', function (event) {
-    // Check if a file was selected
+  let fileInput = document.getElementById('fileInput');
+  fileInput.addEventListener('change', function (event) {
     if (this.files && this.files.length > 0) {
       const file = this.files[0]; // Get the first file
       const reader = new FileReader(); // Create a FileReader
@@ -13,13 +65,12 @@ document.addEventListener('DOMContentLoaded', function () {
       reader.onload = function (event) {
         const fileContent = event.target.result;
         calendarEntryList = JSON.parse(fileContent);
-        const serializedCalendarLineList = JSON.stringify(calendarEntryList, null, 2);
-        const textareaElement = document.getElementById("calendarItemsArea");
-        textareaElement.textContent = serializedCalendarLineList;
+        //loadToTextView();
+        loadToBeautyView();
       };
 
       reader.readAsText(file); // Read the file as text
-    }
+      event.target.value = '';    }
   });
 
   // #endregion fileInput
@@ -27,12 +78,13 @@ document.addEventListener('DOMContentLoaded', function () {
   // #region mergeButton
   var mergeButton = document.getElementById('mergeButton');
   mergeButton.addEventListener('click', function () {
-    calendarEntryList = JSON.parse(document.getElementById("calendarItemsArea").value);
+    //calendarEntryList = JSON.parse(document.getElementById("calendarItemsArea").value);
     mergeCalendarData();
 
-    const serializedCalendarItems = JSON.stringify(calendarEntryList, null, 2);
-    const textareaElement = document.getElementById("calendarItemsArea");
-    textareaElement.value = serializedCalendarItems;
+    // const serializedCalendarItems = JSON.stringify(calendarEntryList, null, 2);
+    // const textareaElement = document.getElementById("calendarItemsArea");
+    // textareaElement.value = serializedCalendarItems;
+    loadToBeautyView();
 
     alert('Calendar merged');
   });
@@ -42,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // #region sendButton
   var sendButton = document.getElementById('sendButton');
   sendButton.addEventListener('click', async function () {
-    calendarEntryList = JSON.parse(document.getElementById("calendarItemsArea").value);
+    //calendarEntryList = JSON.parse(document.getElementById("calendarItemsArea").value);
     let bambooentryList = extractAllBambooEntries(calendarEntryList);
     let clockEntries = extractAllClockEntries(calendarEntryList);
     for (let i = 0; i < clockEntries.length; i++) {
@@ -73,6 +125,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // #endregion send Messages
 
 });
+
+function loadToTextView() {
+  const serializedCalendarLineList = JSON.stringify(calendarEntryList, null, 2);
+  const textareaElement = document.getElementById("calendarItemsArea");
+  textareaElement.textContent = serializedCalendarLineList;
+}
 
 /*const requestData = {
   "entries": [
