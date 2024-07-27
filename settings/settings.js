@@ -4,14 +4,11 @@ var calendarEntryList = null;
 function loadToBeautyView() {
   const calendarEntriesDiv = document.getElementById('calendarEntries');
   calendarEntriesDiv.innerHTML = '';
-
-  calendarEntryList.forEach(entry => {
+  calendarEntryList.forEach((entry, index) => {
     const entryDiv = document.createElement('div');
     entryDiv.classList.add('entry-div');
-
     const date = new Date(entry.Date);
     const timeOff = entry.TimeOff !== undefined ? entry.TimeOff : false;
-
     let totalDuration = 0;
     entry.Items.forEach(item => {
       totalDuration += item.Duration;
@@ -21,12 +18,32 @@ function loadToBeautyView() {
     const totalDurationFormatted = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}min`;
 
     const h3Element = document.createElement('h3');
-    h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted}) ${timeOff ? '(Off)' : ''}`
+    h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted})`;
     if (timeOff) {
       h3Element.classList.add('time-off');
     }
-
     entryDiv.appendChild(h3Element);
+
+    // Create isTimeOffCheckbox
+    const isTimeOffCheckbox = document.createElement('input');
+    isTimeOffCheckbox.type = 'checkbox';
+    isTimeOffCheckbox.id = `isTimeOff-${index}`;
+    isTimeOffCheckbox.checked = timeOff;
+    isTimeOffCheckbox.addEventListener('change', (event) => {
+      const newTimeOffValue = event.target.checked;
+      calendarEntryList[index].TimeOff = newTimeOffValue;
+      h3Element.classList.toggle('time-off', newTimeOffValue);
+      h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted}) ${newTimeOffValue ? '(Off)' : ''}`;
+    });
+
+    const checkboxLabel = document.createElement('label');
+    checkboxLabel.htmlFor = `isTimeOff-${index}`;
+    checkboxLabel.textContent = 'Time Off';
+
+    const checkboxContainer = document.createElement('div');
+    checkboxContainer.appendChild(isTimeOffCheckbox);
+    checkboxContainer.appendChild(checkboxLabel);
+    entryDiv.appendChild(checkboxContainer);
 
     entry.Items.forEach(item => {
       const itemDiv = document.createElement('div');
@@ -41,7 +58,6 @@ function loadToBeautyView() {
           `;
       entryDiv.appendChild(itemDiv);
     });
-
     calendarEntriesDiv.appendChild(entryDiv);
   });
 }
@@ -70,7 +86,8 @@ document.addEventListener('DOMContentLoaded', function () {
       };
 
       reader.readAsText(file); // Read the file as text
-      event.target.value = '';    }
+      event.target.value = '';
+    }
   });
 
   // #endregion fileInput
