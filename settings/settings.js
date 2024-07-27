@@ -4,60 +4,147 @@ var calendarEntryList = null;
 function loadToBeautyView() {
   const calendarEntriesDiv = document.getElementById('calendarEntries');
   calendarEntriesDiv.innerHTML = '';
-  calendarEntryList.forEach((entry, index) => {
+
+  calendarEntryList.forEach((entry, entryIndex) => {
     const entryDiv = document.createElement('div');
     entryDiv.classList.add('entry-div');
     const date = new Date(entry.Date);
-    const timeOff = entry.TimeOff !== undefined ? entry.TimeOff : false;
+
+    // Initialize entry.TimeOff if it doesn't exist
+    if (entry.TimeOff === undefined) {
+      entry.TimeOff = entry.Items.every(item => item.Ignore);
+    }
+
+    // Set all items' Ignore to true if entry.TimeOff is true
+    if (entry.TimeOff) {
+      entry.Items.forEach(item => {
+        item.Ignore = true;
+      });
+    }
+
+    // Calculate total duration and check if all items are ignored
     let totalDuration = 0;
+    let allItemsIgnored = true;
     entry.Items.forEach(item => {
-      totalDuration += item.Duration;
+      if (!item.Ignore) {
+        totalDuration += item.Duration;
+        allItemsIgnored = false;
+      }
     });
+
+    // Update entry.TimeOff if all items are ignored
+    entry.TimeOff = allItemsIgnored;
+
     const hours = Math.floor(totalDuration / 60);
     const minutes = totalDuration % 60;
     const totalDurationFormatted = `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}min`;
 
     const h3Element = document.createElement('h3');
     h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted})`;
-    if (timeOff) {
+    if (entry.TimeOff) {
       h3Element.classList.add('time-off');
+      h3Element.textContent += ' (Time Off)';
     }
     entryDiv.appendChild(h3Element);
 
-    // Create isTimeOffCheckbox
-    const isTimeOffCheckbox = document.createElement('input');
-    isTimeOffCheckbox.type = 'checkbox';
-    isTimeOffCheckbox.id = `isTimeOff-${index}`;
-    isTimeOffCheckbox.checked = timeOff;
-    isTimeOffCheckbox.addEventListener('change', (event) => {
+    // Create isTimeOffCheckbox for the entire entry
+    const isEntryTimeOffCheckbox = document.createElement('input');
+    isEntryTimeOffCheckbox.type = 'checkbox';
+    isEntryTimeOffCheckbox.id = `isEntryTimeOff-${entryIndex}`;
+    isEntryTimeOffCheckbox.checked = entry.TimeOff;
+    isEntryTimeOffCheckbox.addEventListener('change', (event) => {
       const newTimeOffValue = event.target.checked;
-      calendarEntryList[index].TimeOff = newTimeOffValue;
+      entry.TimeOff = newTimeOffValue;
+      let newTotalDuration = 0;
+      entry.Items.forEach((item, itemIndex) => {
+        item.Ignore = newTimeOffValue;
+        if (!newTimeOffValue) {
+          newTotalDuration += item.Duration;
+        }
+        const itemCheckbox = document.getElementById(`isItemIgnored-${entryIndex}-${itemIndex}`);
+        if (itemCheckbox) {
+          itemCheckbox.checked = newTimeOffValue;
+        }
+        const itemDiv = document.getElementById(`itemDiv-${entryIndex}-${itemIndex}`);
+        if (itemDiv) {
+          itemDiv.classList.toggle('ignored', newTimeOffValue);
+        }
+      });
+      const newHours = Math.floor(newTotalDuration / 60);
+      const newMinutes = newTotalDuration % 60;
+      const newTotalDurationFormatted = `${String(newHours).padStart(2, '0')}h ${String(newMinutes).padStart(2, '0')}min`;
       h3Element.classList.toggle('time-off', newTimeOffValue);
-      h3Element.textContent = `${date.toLocaleDateString()} (${totalDurationFormatted}) ${newTimeOffValue ? '(Off)' : ''}`;
+      h3Element.textContent = `${date.toLocaleDateString()} (${newTotalDurationFormatted}) ${newTimeOffValue ? '(Time Off)' : ''}`;
     });
 
     const checkboxLabel = document.createElement('label');
-    checkboxLabel.htmlFor = `isTimeOff-${index}`;
+    checkboxLabel.htmlFor = `isEntryTimeOff-${entryIndex}`;
     checkboxLabel.textContent = 'Time Off';
 
     const checkboxContainer = document.createElement('div');
-    checkboxContainer.appendChild(isTimeOffCheckbox);
+    checkboxContainer.appendChild(isEntryTimeOffCheckbox);
     checkboxContainer.appendChild(checkboxLabel);
     entryDiv.appendChild(checkboxContainer);
 
-    entry.Items.forEach(item => {
+    entry.Items.forEach((item, itemIndex) => {
       const itemDiv = document.createElement('div');
+      itemDiv.id = `itemDiv-${entryIndex}-${itemIndex}`;
       const itemDate = new Date(item.Date);
       const endDate = new Date(itemDate.getTime() + item.Duration * 60000); // Duration in milliseconds
+
+      // Create isIgnoredCheckbox for each item
+      const isItemIgnoredCheckbox = document.createElement('input');
+      isItemIgnoredCheckbox.type = 'checkbox';
+      isItemIgnoredCheckbox.id = `isItemIgnored-${entryIndex}-${itemIndex}`;
+      isItemIgnoredCheckbox.checked = item.Ignore;
+      isItemIgnoredCheckbox.addEventListener('change', (event) => {
+        const newIgnoreValue = event.target.checked;
+        item.Ignore = newIgnoreValue;
+        itemDiv.classList.toggle('ignored', newIgnoreValue);
+
+        // Recalculate total duration and update entry
+        let newTotalDuration = 0;
+        let allItemsIgnored = true;
+        entry.Items.forEach(i => {
+          if (!i.Ignore) {
+            newTotalDuration += i.Duration;
+            allItemsIgnored = false;
+          }
+        });
+        const newHours = Math.floor(newTotalDuration / 60);
+        const newMinutes = newTotalDuration % 60;
+        const newTotalDurationFormatted = `${String(newHours).padStart(2, '0')}h ${String(newMinutes).padStart(2, '0')}min`;
+
+        entry.TimeOff = allItemsIgnored;
+        isEntryTimeOffCheckbox.checked = allItemsIgnored;
+        h3Element.classList.toggle('time-off', allItemsIgnored);
+        h3Element.textContent = `${date.toLocaleDateString()} (${newTotalDurationFormatted}) ${allItemsIgnored ? '(Time Off)' : ''}`;
+      });
+
+      const itemCheckboxLabel = document.createElement('label');
+      itemCheckboxLabel.htmlFor = `isItemIgnored-${entryIndex}-${itemIndex}`;
+      itemCheckboxLabel.textContent = 'Ignore';
+
       itemDiv.innerHTML = `
-              <p class="item-date"><strong>Time:</strong> 
-                ${itemDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()} (${item.Duration} minutes)
-              </p>
-              <p class="item-default"><strong>Project/Task:</strong> ${item.Project} # ${item.Task}</p>
-              <p class="item-default"><strong>Is Default:</strong> ${item.IsDefault ? 'Yes' : 'No'}</p>
-          `;
+        <p class="item-date"><strong>Time:</strong> 
+          ${itemDate.toLocaleTimeString()} - ${endDate.toLocaleTimeString()} (${item.Duration} minutes)
+        </p>
+        <p class="item-default"><strong>Project/Task:</strong> ${item.Project} # ${item.Task}</p>
+        <p class="item-default"><strong>Is Default:</strong> ${item.IsDefault ? 'Yes' : 'No'}</p>
+      `;
+
+      const itemCheckboxContainer = document.createElement('div');
+      itemCheckboxContainer.appendChild(isItemIgnoredCheckbox);
+      itemCheckboxContainer.appendChild(itemCheckboxLabel);
+      itemDiv.appendChild(itemCheckboxContainer);
+
+      if (item.Ignore) {
+        itemDiv.classList.add('ignored');
+      }
+
       entryDiv.appendChild(itemDiv);
     });
+
     calendarEntriesDiv.appendChild(entryDiv);
   });
 }
@@ -343,11 +430,16 @@ function extractAllBambooEntries(data) {
   const allItems = [];
   data.forEach(entry => {
     if (!entry.TimeOff) {
-      allItems.push(...entry.Items);
+      entry.Items.forEach(item => {
+        if (!item.Ignore) {
+          allItems.push(item);
+        }
+      });
     }
   });
   return allItems;
 }
+
 function extractAllClockEntries(data) {
   const allItems = [];
   data.forEach(entry => {
